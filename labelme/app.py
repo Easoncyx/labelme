@@ -315,6 +315,16 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         toggle_keep_prev_mode.setChecked(self._config["keep_prev"])
 
+        toggle_keep_prev_sel_mode = action(
+            self.tr("Keep Previous Selected Shape"),
+            self.toggleKeepPrevSelMode,
+            shortcuts["toggle_keep_prev_sel_mode"],
+            None,
+            self.tr('Toggle "keep pevious selected shape" mode'),
+            checkable=True,
+        )
+        toggle_keep_prev_sel_mode.setChecked(self._config["keep_prev_sel"])
+
         createMode = action(
             self.tr("Create Polygons"),
             lambda: self.toggleDrawMode(False, createMode="polygon"),
@@ -565,6 +575,7 @@ class MainWindow(QtWidgets.QMainWindow):
             close=close,
             deleteFile=deleteFile,
             toggleKeepPrevMode=toggle_keep_prev_mode,
+            toggleKeepPrevSelMode=toggle_keep_prev_sel_mode,
             delete=delete,
             edit=edit,
             copy=copy,
@@ -603,6 +614,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 addPointToEdge,
                 None,
                 toggle_keep_prev_mode,
+                toggle_keep_prev_sel_mode
             ),
             # menu shown at right click
             menu=(
@@ -1489,6 +1501,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.filename = filename
         if self._config["keep_prev"]:
             prev_shapes = self.canvas.shapes
+        elif not self._config["keep_prev"] and self._config["keep_prev_sel"]:
+            prev_shapes = self.canvas.selectedShapes
         self.canvas.loadPixmap(QtGui.QPixmap.fromImage(image))
         flags = {k: False for k in self._config["flags"] or []}
         if self.labelFile:
@@ -1497,6 +1511,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 flags.update(self.labelFile.flags)
         self.loadFlags(flags)
         if self._config["keep_prev"] and self.noShapes():
+            self.loadShapes(prev_shapes, replace=False)
+            self.setDirty()
+        elif not self._config["keep_prev"] and self._config["keep_prev_sel"]:
             self.loadShapes(prev_shapes, replace=False)
             self.setDirty()
         else:
@@ -1628,8 +1645,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def openPrevImg(self, _value=False):
         keep_prev = self._config["keep_prev"]
+        keep_prev_sel = self._config["keep_prev_sel"]
         if Qt.KeyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
             self._config["keep_prev"] = True
+            self._config["keep_prev_sel"] = True
 
         if not self.mayContinue():
             return
@@ -1647,12 +1666,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.loadFile(filename)
 
         self._config["keep_prev"] = keep_prev
+        self._config["keep_prev_sel"] = keep_prev_sel
 
     def openNextImg(self, _value=False, load=True):
         keep_prev = self._config["keep_prev"]
+        keep_prev_sel = self._config["keep_prev_sel"]
         if Qt.KeyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
             self._config["keep_prev"] = True
-
+            self._config["keep_prev_sel"] = True
+            
         if not self.mayContinue():
             return
 
@@ -1674,7 +1696,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.loadFile(self.filename)
 
         self._config["keep_prev"] = keep_prev
-
+        self._config["keep_prev_sel"] = keep_prev_sel
+        
     def openFile(self, _value=False):
         if not self.mayContinue():
             return
@@ -1875,7 +1898,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def toggleKeepPrevMode(self):
         self._config["keep_prev"] = not self._config["keep_prev"]
-
+        
+    def toggleKeepPrevSelMode(self):
+        self._config["keep_prev_sel"] = not self._config["keep_prev_sel"]
+        
     def removeSelectedPoint(self):
         self.canvas.removeSelectedPoint()
         if not self.canvas.hShape.points:
