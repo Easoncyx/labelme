@@ -1904,7 +1904,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
     def removeSelectedPoint(self):
         self.canvas.removeSelectedPoint()
-        if not self.canvas.hShape.points:
+        if not self.canvas.hShape.points: # bug: here hShape could be None?
             self.canvas.deleteShape(self.canvas.hShape)
             self.remLabels([self.canvas.hShape])
             self.setDirty()
