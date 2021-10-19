@@ -1692,8 +1692,9 @@ class MainWindow(QtWidgets.QMainWindow):
             currIndex = self.imageList.index(self.filename)
             if currIndex + 1 < len(self.imageList):
                 filename = self.imageList[currIndex + 1]
-            else:
+            else: # if already the last file dont reopen the last one again
                 filename = self.imageList[-1]
+                return
         self.filename = filename
 
         if self.filename and load:
